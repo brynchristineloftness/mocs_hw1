@@ -7,7 +7,7 @@ def euler(initial_x, initial_y, step, slope, end):
 	current_x = initial_x
 	state_history = []
 	while( current_x < end+step ): # Can't use <= end b/c floating-point wonkiness
-		if( current_x == initial_x ):
+		if( len(state_history) == 0 ):
 			state_history += [(initial_x,initial_y)]
 		else:
 			last_state = state_history[-1][-1]
@@ -20,12 +20,13 @@ def heun(initial_x, initial_y, step, slope, end):
 	current_x = initial_x
 	state_history = []
 	while( current_x < end+step ): # Can't use <= end b/c floating-point wonkiness
-		if( current_x == initial_x ):
+		if( len(state_history) == 0 ):
 			state_history += [(initial_x,initial_y)]
 		else:
 			last_state = state_history[-1][-1]
-			euler_estimate = last_state + step*(slope(current_x-step, last_state))
-			heun_estimate = last_state + (step/2.0)*(euler_estimate + slope(current_x,euler_estimate))
+			euler_slope_estimate = slope(current_x-step, last_state)
+			euler_estimate = last_state + step*euler_slope_estimate
+			heun_estimate = last_state + (step/2.0)*(euler_slope_estimate + slope(current_x,euler_estimate))
 			state_history += [(current_x,heun_estimate)]
 		current_x += step
 	return state_history
@@ -37,21 +38,23 @@ def plot(beta, step, euler, heun):
 	df_h["Estimate"] = "Heun"
 	df = pd.concat([df_e, df_h])
 	sns.lineplot(data=df, x="t", y="infected", hue="Estimate")
-	plt.title("Beta = %f, Step Size = %f" % (beta,step))
+	plt.xlim(0, 50*step)
+	plt.ylim(0, 100)
+	plt.title("Beta = %.2f, Step Size = %.2f" % (beta,step))
 	fname = "sis_%f_%f.pdf" % (beta,step)
 	plt.savefig(fname, bbox_inches="tight")
 	plt.clf()
 
 
 if __name__ == "__main__":
-	# Example usage
 	"""
+	# Example usage
 	def slope(x, y):
-		return x + 2*y
+		return (3*x - 2*y) / x
 	initial = 0
 
-	print(euler(2, 3, 0.1, slope, 2.5))
-	print(heun(2, 3, 0.1, slope, 2.5))
+	print(euler(1, 0, 0.1, slope, 2.0))
+	print(heun(1, 0, 0.1, slope, 2.0))
 	"""
 
 	initial_susceptible = 90
